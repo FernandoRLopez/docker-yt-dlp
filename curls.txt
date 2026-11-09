@@ -4,3 +4,8 @@ curl -X POST "http://localhost:8000/download/audio?url=https://www.youtube.com/w
 
 
 
+curl -X POST http://localhost:8000/download/audio \
+  -H "X-API-Key: mi-clave-de-pruebas" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=j7KByjKVBHg"}' \
+  -OJ
