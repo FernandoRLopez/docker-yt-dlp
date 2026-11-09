@@ -1,0 +1,3 @@
+v1: solo main.py, en local, sin autenticación
+v2: Docker
+v3: API key

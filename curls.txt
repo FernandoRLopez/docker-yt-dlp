@@ -1,0 +1,6 @@
+curl -X POST "http://localhost:8000/download/audio?url=https://www.youtube.com/watch?v=j7KByjKVBHg" 
+
+curl -X POST "http://localhost:8000/download/audio?url=https://www.youtube.com/watch?v=WS0iGPernG4&list=PLaY9NoPFXc4WNfscan9PT40mBXWWeH9he&index=46" 
+
+
+
