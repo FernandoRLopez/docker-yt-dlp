@@ -29,3 +29,8 @@ docker-yt-dlp/
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
+
+## 🐳 Despliegue
+
+```bash
+sudo docker compose up --build -d
