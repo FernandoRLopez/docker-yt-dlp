@@ -12,7 +12,7 @@ DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # Configuración API Key (lee de la variable de entorno, con fallback a tu clave de pruebas)
-API_KEY = os.getenv("API_KEY", "mi-clave-de-pruebas")
+API_KEY = os.getenv("API_KEY")
 
 def verificar_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
     """Verifica si la API Key proporcionada en la cabecera X-API-Key es válida."""

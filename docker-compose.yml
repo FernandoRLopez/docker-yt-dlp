@@ -1,0 +1,16 @@
+services:
+  yt-dlp-api:
+    build: 
+      context: .
+      dockerfile: app/Dockerfile
+    container_name: youtube-audio-api
+    user: "1000:1000"
+    ports:
+      - "8000:8000"
+    environment:
+      - API_KEY=${API_KEY}
+    volumes:
+       - ./downloads:/app/downloads
+    restart: unless-stopped
+
+
