@@ -1,8 +1,0 @@
-docker-yt-dlp/
-├── app/
-│   ├── main.py       # Inicialización de FastAPI, seguridad (API Key) y endpoints
-│   ├── services.py   # Lógica de negocio pura (yt-dlp, sanitización y FFmpeg)
-│   └── schemas.py    # Modelos Pydantic y ejemplos visuales para el Swagger (/docs)
-├── downloads/        # Carpeta de salida montada en volumen
-├── Dockerfile
-└── requirements.txt
