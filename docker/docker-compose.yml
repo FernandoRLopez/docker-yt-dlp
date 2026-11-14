@@ -10,7 +10,10 @@ services:
     environment:
       - API_KEY=${API_KEY}
     volumes:
-       - ./downloads:/app/downloads
+       - ./downloads/songs:/app/downloads/songs
+       - ./downloads/playlists:/app/downloads/playlists
+       - ./downloads/videos:/app/downloads/videos
+
     restart: unless-stopped
 
 
