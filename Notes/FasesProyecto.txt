@@ -6,11 +6,3 @@ Futuro:
 1. Descargar metadatos de youtube para que se pueda ver en navidrome más info de la canción.
 
 
-
-feat(api): refactorización modular y entorno local
-
-- Reestructuración del proyecto en una arquitectura limpia y eficiente de 3 archivos (main.py, services.py, schemas.py).
-- Mejora en la documentación interactiva de FastAPI (/docs) añadiendo ejemplos JSON explícitos en los modelos Pydantic mediante json_schema_extra.
-- Incorporación de control de seguridad con código 401 Unauthorized para validación de la cabecera X-API-Key.
-- Configuración de red local con extra_hosts (host.docker.internal) para conectar n8n (Docker) con FastAPI en desarrollo.
-- Configuración del entorno virtual (.venv) e inclusión de ficheros de exclusión (.gitignore, .dockerignore) para mantener el repositorio limpio.
