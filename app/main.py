@@ -1,7 +1,9 @@
 import os
 from fastapi import FastAPI, HTTPException, Header, Depends
-from app.schemas import AudioRequest, AudioResponse, PlaylistResponse
-from app.services import descargar_audio_youtube, descargar_playlist_youtube
+from app.schemas import AudioRequest, AudioResponse, PlaylistResponse, VideoRequest, VideoResponse
+from app.services import descargar_audio_youtube, descargar_playlist_youtube, descargar_video_youtube
+from dotenv import load_dotenv
+
 
 app = FastAPI(
     title="YouTube Audio Downloader API",
@@ -9,6 +11,7 @@ app = FastAPI(
     description="API limpia y eficiente para integraciones con n8n y Navidrome."
 )
 
+load_dotenv()
 API_KEY = os.getenv("API_KEY", "mi-clave-de-pruebas")
 
 def verificar_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
@@ -76,14 +79,28 @@ def endpoint_download_audio(data: AudioRequest, _ = Depends(verificar_api_key)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# @app.post("/download/playlist", response_model=PlaylistResponse)
-# def endpoint_download_playlist(data: AudioRequest, _ = Depends(verificar_api_key)):
-#     try:
-#         resultados = descargar_playlist_youtube(data.url)
-#         return {
-#             "success": True,
-#             "total_processed": len(resultados),
-#             "items": resultados
-#         }
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+@app.post("/download/playlist", response_model=PlaylistResponse)
+def endpoint_download_playlist(data: AudioRequest, _ = Depends(verificar_api_key)):
+    try:
+        resultado = descargar_playlist_youtube(data.url)
+        return {
+            "success": True,
+            **resultado
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error procesando la playlist: {str(e)}")
+
+
+@app.post("/download/video", response_model=VideoResponse)
+def endpoint_download_video(data: VideoRequest, _ = Depends(verificar_api_key)):
+    try:
+        resultado = descargar_video_youtube(data.url, data.quality)
+        return {
+            "success": True,
+            "message": f"Vídeo descargado correctamente en {data.quality}p",
+            **resultado
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

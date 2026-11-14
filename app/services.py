@@ -2,8 +2,31 @@ import os
 import unicodedata
 from yt_dlp import YoutubeDL
 
-DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "downloads")
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+#############################
+# Global configuration
+#############################
+
+# Especific and base directories for downloads.
+
+BASE_DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "downloads")
+SONGS_DIR = os.path.join(BASE_DOWNLOAD_DIR, "songs")
+PLAYLISTS_DIR = os.path.join(BASE_DOWNLOAD_DIR, "playlists")
+VIDEOS_DIR = os.path.join(BASE_DOWNLOAD_DIR, "videos")
+
+# To create the directories if they don't exist, we use os.makedirs with exist_ok=True.
+for directory in [SONGS_DIR, PLAYLISTS_DIR, VIDEOS_DIR]:
+    os.makedirs(directory, exist_ok=True)
+
+
+
+
+
+
+
+
+############################
+# Helpers functions
+############################
 
 def limpiar_url(url: str) -> str:
     """Normaliza una URL de YouTube eliminando parámetros de seguimiento.
@@ -43,6 +66,10 @@ def sanitizar_texto(texto: str) -> str:
     safe_title = "".join(c for c in sin_acentos if c.isalnum() or c in " -_").strip()
     return safe_title[:50].strip()
 
+############################
+# Audio Download Functions
+############################
+
 def descargar_audio_youtube(url: str) -> dict:
     """Descarga y convierte a MP3 un único vídeo de YouTube.
 
@@ -73,15 +100,20 @@ def descargar_audio_youtube(url: str) -> dict:
     if not safe_title:
         safe_title = f"audiotrack-{video_id}"
         
-    output_template = os.path.join(DOWNLOAD_DIR, f"{safe_title}.%(ext)s")
-    expected_file = os.path.join(DOWNLOAD_DIR, f"{safe_title}.mp3")
+    output_template = os.path.join(SONGS_DIR, f"{safe_title}.%(ext)s")
+    expected_file = os.path.join(SONGS_DIR, f"{safe_title}.mp3")
 
     ydl_opts = {
         'format': 'bestaudio/best',
-        'postprocessors': [{
+        'postprocessors': [
+            {
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
-        }],
+            },
+            {
+                'key': 'EmbedThumbnail' 
+            }  
+        ],
         'outtmpl': output_template,
         'noplaylist': True,
     }
@@ -101,32 +133,40 @@ def descargar_audio_youtube(url: str) -> dict:
         "file_path": expected_file
     }
 
-def descargar_playlist_youtube(url: str) -> list:
-    """Procesa una playlist de YouTube y descarga cada vídeo incluido.
-
-    La función obtiene la lista de entradas de la playlist, genera la URL de
-    cada vídeo y reutiliza la lógica de descarga individual para convertir
-    todos los elementos a MP3. Si alguna canción falla durante el proceso,
-    se registra el error sin interrumpir el resto de la iteración.
-
-    Args:
-        url (str): URL de la playlist de YouTube que se desea procesar.
-
-    Returns:
-        list: Lista de diccionarios con el resultado de cada elemento. Cada
-        entrada incluye el estado, el identificador del vídeo y, cuando ocurre,
-        el error asociado.
-    """
-    with YoutubeDL({'extract_flat': True, 'noplaylist': False}) as ydl:
+#############################
+# Playlist Download Function
+#############################
+def descargar_playlist_youtube(url: str) -> dict:
+    """Extrae los elementos de una playlist y descarga cada pista dentro de su subcarpeta en 'playlists'."""
+    ydl_opts_info = {
+        'extract_flat': True,
+        'noplaylist': False,
+        'quiet': True
+    }
+    
+    with YoutubeDL(ydl_opts_info) as ydl:
         playlist_info = ydl.extract_info(url, download=False)
+        playlist_title = playlist_info.get('title', 'Playlist sin título')
         entries = playlist_info.get('entries', [])
+
+    if not entries:
+        raise ValueError("No se encontraron vídeos en la URL proporcionada o no es una playlist válida.")
+
+    # Crear una subcarpeta específica para esta playlist dentro de downloads/playlists/
+    safe_playlist_name = sanitizar_texto(playlist_title)
+    playlist_folder = os.path.join(PLAYLISTS_DIR, safe_playlist_name)
+    os.makedirs(playlist_folder, exist_ok=True)
 
     resultados = []
     for entry in entries:
         video_id = entry.get('id')
+        if not video_id:
+            continue
+            
         video_url = f"https://www.youtube.com/watch?v={video_id}"
         try:
-            res = descargar_audio_youtube(video_url)
+            # Reutilizamos la lógica pero redirigiendo el destino a la carpeta de la playlist
+            res = descargar_audio_personalizado(video_url, playlist_folder)
             resultados.append(res)
         except Exception as e:
             resultados.append({
@@ -135,4 +175,101 @@ def descargar_playlist_youtube(url: str) -> list:
                 "error": str(e)
             })
             
-    return resultados
+    return {
+        "playlist_title": playlist_title,
+        "total_processed": len(resultados),
+        "items": resultados
+    }
+
+def descargar_audio_personalizado(url: str, destino_dir: str) -> dict:
+    """Función auxiliar para descargar un audio en un directorio específico (usada por playlists)."""
+    clean_url = limpiar_url(url)
+    with YoutubeDL({'noplaylist': True}) as ydl:
+        info = ydl.extract_info(clean_url, download=False)
+        title = info.get('title', 'cancion')
+        video_id = info.get('id', 'unknown')
+        
+    safe_title = sanitizar_texto(title)
+    if not safe_title:
+        safe_title = f"audiotrack-{video_id}"
+        
+    output_template = os.path.join(destino_dir, f"{safe_title}.%(ext)s")
+    expected_file = os.path.join(destino_dir, f"{safe_title}.mp3")
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [
+            {
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+            },
+            {
+                'key': 'EmbedThumbnail' 
+            }
+        ],
+        'outtmpl': output_template,
+        'noplaylist': True,
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([clean_url])
+
+    return {
+        "success": True,
+        "original_title": title,
+        "sanitized_title": safe_title,
+        "video_id": video_id,
+        "file_name": f"{safe_title}.mp3",
+        "file_path": expected_file
+    }
+
+
+
+###########################
+# Video Download Function
+###########################
+
+def descargar_video_youtube(url: str, quality: str = "720") -> dict:
+    """Procesa y descarga un único vídeo de YouTube a la calidad especificada (720 o 1080)."""
+    clean_url = limpiar_url(url)
+    
+    with YoutubeDL({'noplaylist': True}) as ydl:
+        info = ydl.extract_info(clean_url, download=False)
+        title = info.get('title', 'video')
+        video_id = info.get('id', 'unknown')
+        
+    safe_title = sanitizar_texto(title)
+    if not safe_title:
+        safe_title = f"videotrack-{video_id}"
+        
+    output_template = os.path.join(VIDEOS_DIR, f"{safe_title}.%(ext)s")
+    expected_file = os.path.join(VIDEOS_DIR, f"{safe_title}.mp4")
+
+    # Mapeo de calidad a formato de yt-dlp combinando mejor video (hasta X altura) y mejor audio
+    if quality == "1080":
+        format_selector = "bestvideo[height<=1080]+bestaudio/best[height<=1080]"
+    else:
+        format_selector = "bestvideo[height<=720]+bestaudio/best[height<=720]"
+
+    ydl_opts = {
+        'format': format_selector,
+        'merge_output_format': 'mp4', # Forzar contenedor MP4 final con FFmpeg
+        'outtmpl': output_template,
+        'noplaylist': True,
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([clean_url])
+
+    if not os.path.exists(expected_file):
+        raise RuntimeError("El archivo de vídeo MP4 no se generó correctamente en disco.")
+
+    return {
+        "success": True,
+        "original_title": title,
+        "sanitized_title": safe_title,
+        "video_id": video_id,
+        "quality": quality,
+        "file_name": f"{safe_title}.mp4",
+        "file_path": expected_file
+    }

@@ -1,0 +1,8 @@
+v1: solo main.py, en local, sin autenticación
+v2: API key
+v3: Docker
+
+Futuro:
+1. Descargar metadatos de youtube para que se pueda ver en navidrome más info de la canción.
+
+
