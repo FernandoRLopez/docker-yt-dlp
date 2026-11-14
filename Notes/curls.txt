@@ -1,0 +1,24 @@
+curl -X POST "http://localhost:8000/download/audio?url=https://www.youtube.com/watch?v=j7KByjKVBHg" 
+
+curl -X POST "http://localhost:8000/download/audio?url=https://www.youtube.com/watch?v=WS0iGPernG4&list=PLaY9NoPFXc4WNfscan9PT40mBXWWeH9he&index=46" 
+
+
+
+curl -X POST http://localhost:8000/download/audio \
+  -H "X-API-Key: mi-clave-de-pruebas" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=j7KByjKVBHg"}' \
+  -OJ
+
+
+curl -X POST http://192.168.0.15:5002/download/audio \
+  -H "X-API-Key: 170fe6309789938ce40077df695397301ba78107ae3d28270b623db86d8ac3b6" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=j7KByjKVBHg"}' \
+  -OJ
+
+
+  170fe6309789938ce40077df695397301ba78107ae3d28270b623db86d8ac3b6
+
+
+  docker compose logs -f
